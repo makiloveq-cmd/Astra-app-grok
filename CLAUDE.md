@@ -1,0 +1,107 @@
+# Auris 專案 Claude 工作規則
+
+## 版更 Checklist（每次 commit 前必做）
+
+每次功能修改、bug 修復、UI 調整，commit 前依序完成。**第 1、2 項每次必做**，第 3、4 項視異動性質決定。
+
+> ⚠️ 動工前先看本檔最後的「**防呆三原則**」——過去出包都栽在那三件事（亂序、重複「當前版本」、漏連動計數）。
+
+### 1. 更新設定頁版號（必做）
+**檔案**：`auris-vue/src/views/SettingsView.vue`
+- 搜尋 `Auris · P`（目前格式為 `Auris · P67`，**注意沒有 "v"**）
+- 版號 +1（如 P67 → P68）
+- 更新下方那行的修復摘要（簡短描述這次改了什麼）
+
+### 2. 更新進度總覽（必做）
+**檔案**：`Auris 完整開發進度總覽.md`
+- 此檔為「**舊 → 新遞增**」排列，新節**加在編號最大的 P 節之後**（檔案最下方那一節），不可插在中間或跳號
+- 同步更新**檔頭的「當前版本」欄位**（並把舊節標題裡的「當前版本」字樣移除，見防呆原則 1）
+- 若跨到新 Phase 範圍，更新 Phase 標題的版本區間（如「Phase 4：P39–P67」）
+- 格式照現有節：標題（含日期）、功能描述、受影響檔案表格
+
+### 3. 更新架構文件（有技術/架構/邏輯異動才做）
+**檔案**：`auris-vue/ARCHITECTURE.md`
+- 版本紀錄為「**新 → 舊降序**」，新版插在「## 12. 版本更新紀錄」**最前面**（與進度總覽方向相反，別搞混）
+- 同步更新檔頭「最後更新」日期與版號
+- 若新增 service / store / component / route / 欄位，一併更新對應章節與表格（IndexedDB 表、Router 表、Views 說明、目錄）
+
+### 4. 更新產品功能清單（有「使用者看得到的新能力」才做）
+**檔案**：`product_feature_list.md`
+- **非必做**：純 bug 修、內部重構、文件調整免更新；只有新增或改變對使用者可見的功能時才更新
+- 把新能力寫進對應章節；若該功能原本列在「產品藍圖」，記得從藍圖搬出來、標示已完成
+- 同步檔頭「對應版本」
+
+---
+
+## 🛡️ 防呆三原則（每次 commit 前自我檢查，過去都栽在這）
+
+1. **只能有一個「當前版本」**：改版時**先把上一版的「當前版本」字樣拿掉**，再標到新版。檢查法：`grep "當前版本"` 應只出現在「檔頭欄位 + 最新那一節」。
+2. **不亂序**：兩份 .md 方向相反且固定——**進度總覽遞增（新在最下）**、**ARCHITECTURE 降序（新在最上）**。新節務必放對方向與位置，P 編號連續不跳號。
+3. **不漏連動**：新增路由 / store / View / 欄位時，順手更新文件裡的**計數與表格**（路由數、View 數、store 欄位說明、me_settings/characters/messages 軟欄位）。改完 `grep` 一下舊數字（如 `21 條`）確認沒殘留。
+
+---
+
+## Branch 策略
+
+- **`dev` 分支**：所有開發與修復一律先推到這裡，Vercel 自動部署測試版
+- **`main` 分支**：只有使用者**明確確認**後才能推，推上去會更新對外公開的 GitHub Pages 正式版
+- **絕對不可在未經確認的情況下推送到 `main`**
+
+## Build & Deploy 流程
+
+### 日常開發（推測試版）
+```bash
+git add <files>
+git commit -m "Fix PXX: 摘要"
+git push origin dev   # Vercel 自動部署到測試版
+```
+
+### 發布正式版（使用者確認後才執行）
+```bash
+# 1. Build
+cd auris-vue && npm run build
+
+# 2. Copy to root
+cp -r dist/* ..
+
+# 3. Clean old assets
+git rm assets/index-{舊hash}.{css,js}
+
+# 4. Stage & commit & push main
+git add -A
+git commit -m "Fix PXX: 摘要"
+git push origin main   # 更新 GitHub Pages 正式版
+```
+
+**推上任何分支前必須先問使用者是否確認推送。**
+
+---
+
+## 專案架構速查
+
+- **Vue 源碼**：`auris-vue/src/`
+- **Build 輸出**：直接 copy 到專案根目錄（`assets/`, `index.html`）
+- **測試版部署**：Vercel，監聽 `dev` 分支自動部署（`auris-app-git-dev-sabine630-6243s-projects.vercel.app`）
+- **正式版部署**：GitHub Pages，`main` 分支（`sabine630.github.io/auris-app`）
+- **Archive（舊版 HTML 單檔）**：`archive/` — 唯讀參考，不修改
+
+## 重要檔案對照
+
+| 目的 | 檔案 |
+|------|------|
+| 版號顯示 | `auris-vue/src/views/SettingsView.vue` |
+| 進度紀錄（遞增） | `Auris 完整開發進度總覽.md` |
+| 架構文件（降序） | `auris-vue/ARCHITECTURE.md` |
+| 產品功能清單（視需要） | `product_feature_list.md` |
+| 全域樣式 | `auris-vue/src/assets/main.css` |
+| 全域狀態 | `auris-vue/src/store/index.js` |
+| API 底層 | `auris-vue/src/services/api.js` |
+| AI 生成 | `auris-vue/src/services/contentEngine.js` |
+| 聊天引擎 | `auris-vue/src/services/chatEngine.js` |
+
+## iOS PWA 鍵盤處理原則
+
+- `body` 需有 `position: fixed; width: 100%`（防 iOS 偷捲 visualViewport）
+- `globalStore.keyboardOffset` 追蹤鍵盤高度，`BottomNav` 用 `kb-hidden` class 隱藏
+- 輸入框 focus 時用 `scrollIntoView({ block: 'nearest' })` 確保可見
+- **不要**在 phone container 加 `paddingBottom: keyboardOffset`（會造成空白）
